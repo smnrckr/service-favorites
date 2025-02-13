@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: user_favortes_db
+    restart: always
+    environment:
+      POSTGRES_USER: user_favorites
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: user_favorites
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
