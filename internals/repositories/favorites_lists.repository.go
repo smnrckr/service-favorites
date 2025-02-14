@@ -2,22 +2,15 @@ package repositories
 
 import (
 	"user-favorites-service/internals/models"
-
-	"gorm.io/gorm"
 )
 
-type FavoritesListsStorage interface {
-	GetConnection() *gorm.DB
-	Close()
-}
-
 type FavoritesListsRepository struct {
-	storage FavoritesListsStorage
+	storage PostgreDB
 }
 
-func NewFavoritesListsRepository(s FavoritesStorage) *FavoritesListsRepository {
+func NewFavoritesListsRepository(storage PostgreDB) *FavoritesListsRepository {
 	return &FavoritesListsRepository{
-		storage: s,
+		storage: storage,
 	}
 }
 
@@ -55,15 +48,9 @@ func (r *FavoritesListsRepository) ChechFavoriteListExist(listId int, userId int
 	return true, nil
 }
 
-func (r *FavoritesListsRepository) UpdateFavoriteList(listId int, updatedData models.FavoriteListUpdateRequest) error {
-	newData := models.FavoriteList{
-		Name: updatedData.Name,
-	}
-	if updatedData.Name == "" {
-		return nil
-	}
+func (r *FavoritesListsRepository) UpdateFavoriteList(listId int, updatedData models.FavoriteList) error {
 
-	result := r.storage.GetConnection().Where("id = ?", listId).Updates(&newData)
+	result := r.storage.GetConnection().Where("id = ?", listId).Updates(&updatedData)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -71,7 +58,6 @@ func (r *FavoritesListsRepository) UpdateFavoriteList(listId int, updatedData mo
 	if result.RowsAffected == 0 {
 		return models.ErrorListNotFound
 	}
-
 	return nil
 
 }

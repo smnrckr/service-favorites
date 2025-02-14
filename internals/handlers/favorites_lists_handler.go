@@ -14,7 +14,7 @@ type favoritesListsService interface {
 	CreateFavoriteList(list *models.FavoriteList) error
 	DeleteFavoriteListById(listId int, userId int) error
 	GetFavoriteListsByUserId(userId int) ([]models.FavoriteList, error)
-	UpdateFavoriteList(id int, updatedData models.FavoriteListUpdateRequest) error
+	UpdateFavoriteList(id int, updatedData models.FavoriteList) error
 }
 
 type FavoritesListsHandler struct {
@@ -34,6 +34,14 @@ func (h *FavoritesListsHandler) handleCreateFavoriteList(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
 	}
 	favoriteList := models.FavoriteList{Name: favoriteReq.Name, UserID: favoriteReq.UserID}
+	if favoriteReq.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "name is required"})
+	}
+
+	if favoriteReq.UserID == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "user is required"})
+	}
+
 	err := h.favoritesListsService.CreateFavoriteList(&favoriteList)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{Error: err.Error()})
@@ -87,17 +95,19 @@ func (h *FavoritesListsHandler) handleUpdateFavoriteList(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Geçersiz list ID"})
 	}
 
-	userRequest := models.FavoriteListUpdateRequest{}
-	err = c.BodyParser(&userRequest)
+	favoriteListUpdateRequest := models.FavoriteListUpdateRequest{}
+	err = c.BodyParser(&favoriteListUpdateRequest)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Geçersiz JSON verisi"})
 	}
 
-	if userRequest.Name == "" {
+	if favoriteListUpdateRequest.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": " name boş olamaz"})
 	}
 
-	err = h.favoritesListsService.UpdateFavoriteList(listId, userRequest)
+	favoriteList := models.FavoriteList{Name: favoriteListUpdateRequest.Name, UserID: favoriteListUpdateRequest.UserID}
+
+	err = h.favoritesListsService.UpdateFavoriteList(listId, favoriteList)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

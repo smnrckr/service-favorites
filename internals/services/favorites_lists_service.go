@@ -8,7 +8,7 @@ type favoritesListsRepository interface {
 	CreateFavoriteList(list *models.FavoriteList) error
 	DeleteFavoriteListById(listId int, userId int) error
 	GetFavoriteListsByUserId(userId int) ([]models.FavoriteList, error)
-	UpdateFavoriteList(id int, updatedData models.FavoriteListUpdateRequest) error
+	UpdateFavoriteList(id int, updatedData models.FavoriteList) error
 }
 
 type favoriteListsUserClient interface {
@@ -28,6 +28,11 @@ func NewFavoritesListsService(repository favoritesListsRepository, userClient fa
 }
 
 func (s *FavoritesListsService) CreateFavoriteList(list *models.FavoriteList) error {
+	err := s.checkUserExist(list.UserID)
+	if err != nil {
+		return err
+	}
+
 	return s.favoritesListsRepository.CreateFavoriteList(list)
 }
 
@@ -47,7 +52,7 @@ func (s *FavoritesListsService) GetFavoriteListsByUserId(userId int) ([]models.F
 	return s.favoritesListsRepository.GetFavoriteListsByUserId(userId)
 }
 
-func (s *FavoritesListsService) UpdateFavoriteList(listId int, updatedData models.FavoriteListUpdateRequest) error {
+func (s *FavoritesListsService) UpdateFavoriteList(listId int, updatedData models.FavoriteList) error {
 	return s.favoritesListsRepository.UpdateFavoriteList(listId, updatedData)
 }
 
@@ -57,7 +62,7 @@ func (s *FavoritesListsService) checkUserExist(userId int) error {
 		return err
 	}
 	if !isUserExist {
-		return err
+		return models.ErrorUserNotFound
 	}
 	return nil
 }

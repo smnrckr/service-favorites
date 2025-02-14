@@ -2,20 +2,13 @@ package repositories
 
 import (
 	"user-favorites-service/internals/models"
-
-	"gorm.io/gorm"
 )
 
-type FavoritesStorage interface {
-	GetConnection() *gorm.DB
-	Close()
-}
-
 type FavoritesRepository struct {
-	storage FavoritesStorage
+	storage PostgreDB
 }
 
-func NewFavoritesRepository(s FavoritesStorage) *FavoritesRepository {
+func NewFavoritesRepository(s PostgreDB) *FavoritesRepository {
 	return &FavoritesRepository{
 		storage: s,
 	}
