@@ -30,11 +30,12 @@ func main() {
 	userClient := client.NewUserClient()
 
 	favoritesListRepo := repositories.NewFavoritesListsRepository(db)
-	favoritesListService := services.NewFavoritesListsService(favoritesListRepo, userClient)
-	favoritesListHandler := handlers.NewFavoritesListsHandler(favoritesListService)
-
 	favoritesRepo := repositories.NewFavoritesRepository(db)
+
 	favoritesService := services.NewFavoritesService(favoritesRepo, favoritesListRepo, userClient)
+	favoritesListService := services.NewFavoritesListsService(favoritesListRepo, favoritesRepo, userClient)
+
+	favoritesListHandler := handlers.NewFavoritesListsHandler(favoritesListService)
 	favoritesHandler := handlers.NewFavoritesHandler(favoritesService)
 
 	app := fiber.New()

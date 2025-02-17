@@ -27,6 +27,14 @@ func (r *FavoritesRepository) DeleteFavoriteById(userId int, list_id int, produc
 	return result.Error
 }
 
+func (r *FavoritesRepository) DeleteAllFavoritesByListId(userId int, list_id int) error {
+	result := r.storage.GetConnection().Where("user_id = ? AND list_id = ? ", userId, list_id).Delete(&models.Favorite{})
+	if result.RowsAffected == 0 {
+		return models.ErrorNoRowsAffected
+	}
+	return result.Error
+}
+
 func (r *FavoritesRepository) GetAllFavoritesFromList(listId int) ([]models.Favorite, error) {
 	var favorites []models.Favorite
 	err := r.storage.GetConnection().Where("list_id = ?", listId).Find(&favorites).Error

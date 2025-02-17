@@ -34,7 +34,7 @@ func TestFavoritesListsRepository(t *testing.T) {
 			Name: "ayakkabılar",
 		}
 
-		updatedList, err := favoritesListRepo.UpdateFavoriteList(1, updatedData)
+		updatedList, err := favoritesListRepo.UpdateFavoriteList(2, updatedData)
 		assert.NoError(t, err)
 
 		favoriteLists, err := favoritesListRepo.GetFavoriteListsByUserId(2)
@@ -46,7 +46,7 @@ func TestFavoritesListsRepository(t *testing.T) {
 
 	t.Run("DeleteFavoriteList", func(t *testing.T) {
 
-		err := favoritesListRepo.DeleteFavoriteListById(1, 2)
+		err := favoritesListRepo.DeleteFavoriteListById(2, 2)
 		assert.NoError(t, err)
 		favoriteLists, err := favoritesListRepo.GetFavoriteListsByUserId(2)
 		assert.NoError(t, err)

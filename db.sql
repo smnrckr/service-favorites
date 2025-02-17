@@ -16,3 +16,6 @@ create table
 
 INSERT INTO favorite_list (user_id, name)
 VALUES (1, 'ayakkabılar');
+
+INSERT INTO favorite (user_id,list_id,product_id)
+VALUES (1,1,1)

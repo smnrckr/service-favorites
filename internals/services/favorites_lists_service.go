@@ -15,14 +15,20 @@ type favoriteListsUserClient interface {
 	CheckUserExist(userID int) (bool, error)
 }
 
+type favoritesDeleteRepository interface {
+	DeleteAllFavoritesByListId(userId int, list_id int) error
+}
+
 type FavoritesListsService struct {
 	favoritesListsRepository favoritesListsRepository
+	favoritesRespository     favoritesDeleteRepository
 	userClient               favoriteListsUserClient
 }
 
-func NewFavoritesListsService(repository favoritesListsRepository, userClient favoriteListsUserClient) *FavoritesListsService {
+func NewFavoritesListsService(favoritesListRepository favoritesListsRepository, favoritesRepository favoritesDeleteRepository, userClient favoriteListsUserClient) *FavoritesListsService {
 	return &FavoritesListsService{
-		favoritesListsRepository: repository,
+		favoritesListsRepository: favoritesListRepository,
+		favoritesRespository:     favoritesRepository,
 		userClient:               userClient,
 	}
 }
@@ -38,6 +44,10 @@ func (s *FavoritesListsService) CreateFavoriteList(list *models.FavoriteList) er
 
 func (s *FavoritesListsService) DeleteFavoriteListById(listId int, userId int) error {
 	err := s.checkUserExist(userId)
+	if err != nil {
+		return err
+	}
+	err = s.favoritesRespository.DeleteAllFavoritesByListId(userId, listId)
 	if err != nil {
 		return err
 	}
