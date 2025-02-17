@@ -35,7 +35,7 @@ func (r *FavoritesListsRepository) GetFavoriteListsByUserId(userId int) ([]model
 	return favoriteLists, result.Error
 }
 
-func (r *FavoritesListsRepository) ChechFavoriteListExist(listId int, userId int) (bool, error) {
+func (r *FavoritesListsRepository) CheckFavoriteListExist(listId int, userId int) (bool, error) {
 	favoriteList := models.FavoriteList{}
 	result := r.storage.GetConnection().Where("user_id = ? AND id = ?  ", userId, listId).Find(&favoriteList)
 	if result.Error != nil {
@@ -48,16 +48,17 @@ func (r *FavoritesListsRepository) ChechFavoriteListExist(listId int, userId int
 	return true, nil
 }
 
-func (r *FavoritesListsRepository) UpdateFavoriteList(listId int, updatedData models.FavoriteList) error {
+func (r *FavoritesListsRepository) UpdateFavoriteList(listId int, updatedData models.FavoriteList) (models.FavoriteList, error) {
 
 	result := r.storage.GetConnection().Where("id = ?", listId).Updates(&updatedData)
+
 	if result.Error != nil {
-		return result.Error
+		return models.FavoriteList{}, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return models.ErrorListNotFound
+		return models.FavoriteList{}, models.ErrorListNotFound
 	}
-	return nil
+	return updatedData, nil
 
 }

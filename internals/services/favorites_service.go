@@ -5,7 +5,7 @@ import (
 )
 
 type favoriteListsRepoFavoriteService interface {
-	ChechFavoriteListExist(listId int, userId int) (bool, error)
+	CheckFavoriteListExist(listId int, userId int) (bool, error)
 }
 
 type favoritesRepository interface {
@@ -19,21 +19,21 @@ type favoritedUserClient interface {
 }
 
 type FavoritesService struct {
-	userFavoritesRepository favoritesRepository
-	favoriteListRepository  favoriteListsRepoFavoriteService
-	userClient              favoritedUserClient
+	favoritesRepository    favoritesRepository
+	favoriteListRepository favoriteListsRepoFavoriteService
+	userClient             favoritedUserClient
 }
 
 func NewFavoritesService(repository favoritesRepository, favoriteListRepo favoriteListsRepoFavoriteService, userClient favoritedUserClient) *FavoritesService {
 	return &FavoritesService{
-		userFavoritesRepository: repository,
-		userClient:              userClient,
-		favoriteListRepository:  favoriteListRepo,
+		favoritesRepository:    repository,
+		userClient:             userClient,
+		favoriteListRepository: favoriteListRepo,
 	}
 }
 
 func (s *FavoritesService) AddProductToFavoriteList(favorite *models.Favorite) error {
-	isFavoriteListExist, err := s.favoriteListRepository.ChechFavoriteListExist(favorite.ListID, favorite.UserID)
+	isFavoriteListExist, err := s.favoriteListRepository.CheckFavoriteListExist(favorite.ListID, favorite.UserID)
 	if err != nil {
 		return err
 	}
@@ -41,11 +41,11 @@ func (s *FavoritesService) AddProductToFavoriteList(favorite *models.Favorite) e
 	if !isFavoriteListExist {
 		return models.ErrorListNotFound
 	}
-	return s.userFavoritesRepository.AddProductToFavoriteList(favorite)
+	return s.favoritesRepository.AddProductToFavoriteList(favorite)
 }
 
 func (s *FavoritesService) DeleteFavoritetById(userId int, listId int, favoriteProductId int) error {
-	return s.userFavoritesRepository.DeleteFavoriteById(userId, listId, favoriteProductId)
+	return s.favoritesRepository.DeleteFavoriteById(userId, listId, favoriteProductId)
 }
 
 func (s *FavoritesService) GetAllFavoritesFromList(listId int, userId int) ([]models.Favorite, error) {
@@ -53,5 +53,5 @@ func (s *FavoritesService) GetAllFavoritesFromList(listId int, userId int) ([]mo
 	if err != nil || !isUserExist {
 		return nil, err
 	}
-	return s.userFavoritesRepository.GetAllFavoritesFromList(listId)
+	return s.favoritesRepository.GetAllFavoritesFromList(listId)
 }

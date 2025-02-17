@@ -31,32 +31,37 @@ func (h *FavoritesHandler) handleAddProductToFavoriteList(c *fiber.Ctx) error {
 	if err := c.BodyParser(&favoriteReq); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
 	}
+
+	if err := favoriteReq.Validate(); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	newProduct := models.Favorite{UserID: favoriteReq.UserID, ListID: favoriteReq.ListID, ProductID: favoriteReq.ProductID}
 	err := h.favoritesService.AddProductToFavoriteList(&newProduct)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{Error: err.Error()})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": favoriteReq})
+	return c.Status(fiber.StatusOK).JSON(newProduct)
 }
 
 func (h *FavoritesHandler) handleDeleteFavoriteById(c *fiber.Ctx) error {
-	userId, err := c.ParamsInt("userId")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
+	userId := c.QueryInt("userId", -1)
+	if userId == -1 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "userId required"})
 	}
 
-	listId, err := c.ParamsInt("listId")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
+	listId := c.QueryInt("listId", -1)
+	if listId == -1 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "listId required"})
 	}
 
-	favoriteProductId, err := c.ParamsInt("productId")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
+	productId := c.QueryInt("productId", -1)
+	if productId == -1 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "productId required"})
 	}
 
-	err = h.favoritesService.DeleteFavoritetById(userId, listId, favoriteProductId)
+	err := h.favoritesService.DeleteFavoritetById(userId, listId, productId)
 	if err != nil {
 		if err == models.ErrorNoRowsAffected {
 			return c.Status(fiber.StatusNotFound).JSON(models.ErrorResponse{Error: err.Error()})
@@ -69,13 +74,14 @@ func (h *FavoritesHandler) handleDeleteFavoriteById(c *fiber.Ctx) error {
 }
 
 func (h *FavoritesHandler) handleGetAllFavoritesFromList(c *fiber.Ctx) error {
-	userId, err := c.ParamsInt("userId")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
+	userId := c.QueryInt("userId", -1)
+	if userId == -1 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "userId required"})
 	}
-	listId, err := c.ParamsInt("listId")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: err.Error()})
+
+	listId := c.QueryInt("listId", -1)
+	if listId == -1 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "listId required"})
 	}
 
 	favoriteLists, err := h.favoritesService.GetAllFavoritesFromList(listId, userId)
@@ -87,21 +93,21 @@ func (h *FavoritesHandler) handleGetAllFavoritesFromList(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(favoriteResponse)
 }
 
-func (h *FavoritesHandler) FavoritesSetRoutess(app *fiber.App) {
-	userGroup := app.Group("/user/:userId<int>")
+func (h *FavoritesHandler) FavoritesSetRoutes(app *fiber.App) {
+	favoriteGroup := app.Group("/favorites")
 
-	userGroup.Delete("/favorite-list/:listId<int>/favorites/:productId<int>", h.handleDeleteFavoriteById)
-	userGroup.Get("/favorite-list/:listId<int>/favorites", h.handleGetAllFavoritesFromList)
-	app.Post("/favorite-list/favorites", h.handleAddProductToFavoriteList)
+	favoriteGroup.Delete("/", h.handleDeleteFavoriteById)
+	favoriteGroup.Get("/", h.handleGetAllFavoritesFromList)
+	favoriteGroup.Post("/", h.handleAddProductToFavoriteList)
 
 }
 
 var FavoritesEndpoints = []*endpoint.EndPoint{
 	endpoint.New(
 		endpoint.GET,
-		"/user/{userId}/favorite-list/{listId}/favorites",
-		endpoint.WithTags("get favorites from favorite-lists"),
-		endpoint.WithParams(parameter.IntParam("userId", parameter.Path, parameter.WithRequired(), parameter.WithDescription("Kullanıcı id")), parameter.IntParam("listId", parameter.Path, parameter.WithRequired(), parameter.WithDescription("Liste id"))),
+		"/favorites",
+		endpoint.WithTags("favorites"),
+		endpoint.WithParams(parameter.IntParam("userId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Kullanıcı id")), parameter.IntParam("listId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Liste id"))),
 		endpoint.WithSuccessfulReturns([]response.Response{response.New(
 			models.FavoritesResponse{}, "OK", "200")}),
 		endpoint.WithErrors([]response.Response{response.New(models.ErrorResponse{}, "Bad Request", "500")}),
@@ -109,8 +115,8 @@ var FavoritesEndpoints = []*endpoint.EndPoint{
 	),
 	endpoint.New(
 		endpoint.POST,
-		"/favorite-list/favorites",
-		endpoint.WithTags("add product to favorite-lists"),
+		"/favorites",
+		endpoint.WithTags("favorites"),
 		endpoint.WithBody(models.FavoriteCreateRequest{}),
 		endpoint.WithSuccessfulReturns([]response.Response{response.New(
 			models.Favorite{}, "OK", "200")}),
@@ -119,9 +125,9 @@ var FavoritesEndpoints = []*endpoint.EndPoint{
 	),
 	endpoint.New(
 		endpoint.DELETE,
-		"/user/{userId}/favorite-list/{listId}/favorites/{productId}",
-		endpoint.WithTags("delete product from favorite-lists"),
-		endpoint.WithParams(parameter.IntParam("userId", parameter.Path, parameter.WithRequired(), parameter.WithDescription("Kullanıcı id")), parameter.IntParam("listId", parameter.Path, parameter.WithRequired(), parameter.WithDescription("Product id")), parameter.IntParam("productId", parameter.Path, parameter.WithRequired(), parameter.WithDescription("Product id"))),
+		"/favorites",
+		endpoint.WithTags("favorites"),
+		endpoint.WithParams(parameter.IntParam("userId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Kullanıcı id")), parameter.IntParam("listId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Product id")), parameter.IntParam("productId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Product id"))),
 		endpoint.WithSuccessfulReturns([]response.Response{response.New(models.SuccessResponse{}, "OK", "200")}),
 		endpoint.WithErrors([]response.Response{response.New(struct{ Error string }{}, "Bad Request", "500")}),
 		endpoint.WithDescription("favori listesindeki ürün silinir"),

@@ -13,3 +13,6 @@ create table
         list_id integer not null constraint favorite_list_id___fk references favorite_list,
         constraint favorite_product_id_list_id_unique_key_pk unique (product_id, list_id)
     );
+
+INSERT INTO favorite_list (user_id, name)
+VALUES (1, 'ayakkabılar');

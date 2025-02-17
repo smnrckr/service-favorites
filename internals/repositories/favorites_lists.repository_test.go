@@ -17,7 +17,7 @@ func TestFavoritesListsRepository(t *testing.T) {
 		}
 		err := favoritesListRepo.CreateFavoriteList(&favoriteList)
 		assert.NoError(t, err)
-		assert.Equal(t, 1, favoriteList.Id)
+		assert.Equal(t, 2, favoriteList.Id)
 	})
 
 	t.Run("GetAllFavoriteLists", func(t *testing.T) {
@@ -34,14 +34,14 @@ func TestFavoritesListsRepository(t *testing.T) {
 			Name: "ayakkabılar",
 		}
 
-		err := favoritesListRepo.UpdateFavoriteList(1, updatedData)
+		updatedList, err := favoritesListRepo.UpdateFavoriteList(1, updatedData)
 		assert.NoError(t, err)
 
 		favoriteLists, err := favoritesListRepo.GetFavoriteListsByUserId(2)
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, favoriteLists)
-		assert.Equal(t, "ayakkabılar", favoriteLists[0].Name)
+		assert.Equal(t, updatedList.Name, favoriteLists[0].Name)
 	})
 
 	t.Run("DeleteFavoriteList", func(t *testing.T) {

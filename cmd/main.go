@@ -44,7 +44,7 @@ func main() {
 	sw.AddEndpoints(handlers.FavoritesListsEndpoints)
 	swagger.SwaggerHandler(app, sw.MustToJson(), swagger.WithPrefix("/swagger"))
 
-	favoritesHandler.FavoritesSetRoutess(app)
+	favoritesHandler.FavoritesSetRoutes(app)
 	favoritesListHandler.FavoritesListsSetRoutes(app)
 
 	app.Listen(":8081")

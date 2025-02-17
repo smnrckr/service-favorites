@@ -15,21 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockUserClient struct {
-}
-
-func (m *MockUserClient) CheckUserExist(userID int) (bool, error) {
-	switch userID {
-	case 1:
-		return true, nil
-	case 2:
-		return false, nil
-	}
-	return false, nil
-}
-
 func TestFavoritesLists(t *testing.T) {
-	mockUserClient := new(MockUserClient)
+	mockUserClient := new(handlers.MockUserClient)
 	favoriteListRespo := repositories.NewFavoritesListsRepository(testDb)
 	favoriteListService := services.NewFavoritesListsService(favoriteListRespo, mockUserClient)
 	handler := handlers.NewFavoritesListsHandler(favoriteListService)
@@ -38,7 +25,7 @@ func TestFavoritesLists(t *testing.T) {
 
 	handler.FavoritesListsSetRoutes(app)
 
-	t.Run("CreateFavoriteList", func(t *testing.T) {
+	t.Run("Create Favorite List", func(t *testing.T) {
 		request := models.FavoriteListCreateRequest{
 			Name:   "ayakkabılar",
 			UserID: 1,
@@ -62,11 +49,11 @@ func TestFavoritesLists(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, 200, resp.StatusCode)
-		assert.Equal(t, 1, favoriteList.Id)
+		assert.Equal(t, 2, favoriteList.Id)
 
 	})
 
-	t.Run("CreateFavoriteListInvalid", func(t *testing.T) {
+	t.Run("Create Favorite List Invalid", func(t *testing.T) {
 		requestBody := map[string]interface{}{
 			"name": "ayakkabılar",
 		}
@@ -92,7 +79,7 @@ func TestFavoritesLists(t *testing.T) {
 		assert.Equal(t, 400, resp.StatusCode)
 
 	})
-	t.Run("CreateFavoriteListUserInvalid", func(t *testing.T) {
+	t.Run("Create Favorite List User Invalid", func(t *testing.T) {
 		requestBody := map[string]interface{}{
 			"name":    "ayakkabılar",
 			"user_id": 999,
@@ -117,6 +104,92 @@ func TestFavoritesLists(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, errorResp)
 		assert.Equal(t, 500, resp.StatusCode)
+
+	})
+
+	t.Run("Get Favorite Lists By UserId", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/favorite-lists?userId=1", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+
+		jsonDataFromHttp, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		favoriteLists := models.FavoriteListResponse{}
+		err = json.Unmarshal(jsonDataFromHttp, &favoriteLists)
+		assert.NoError(t, err)
+
+		assert.NotEmpty(t, favoriteLists)
+
+	})
+
+	t.Run("Get Favorite Lists By UserId Invalid", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/favorite-lists", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+
+		jsonDataFromHttp, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		errorResponse := models.ErrorResponse{}
+		err = json.Unmarshal(jsonDataFromHttp, &errorResponse)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, errorResponse)
+
+	})
+
+	t.Run("Update Favorite Lists", func(t *testing.T) {
+		newData := models.FavoriteListUpdateRequest{
+			Name: "çantalar",
+		}
+		requestJSON, err := json.Marshal(newData)
+		if err != nil {
+			t.Fatalf("Error marshaling request: %v", err)
+		}
+
+		req := httptest.NewRequest("PUT", "/favorite-lists/1", bytes.NewBuffer(requestJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+		jsonDataFromHttp, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		favoriteListsUpdate := models.FavoriteList{}
+		err = json.Unmarshal(jsonDataFromHttp, &favoriteListsUpdate)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "çantalar", favoriteListsUpdate.Name)
+
+	})
+
+	t.Run("Delete Favorite Lists", func(t *testing.T) {
+		req := httptest.NewRequest("DELETE", "/favorite-lists/1?userId=1", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+
+		reqs := httptest.NewRequest("GET", "/favorite-lists?userId=1", nil)
+		reqs.Header.Set("Content-Type", "application/json")
+
+		respp, err := app.Test(reqs)
+		assert.NoError(t, err)
+
+		jsonDataFromHttp, err := io.ReadAll(respp.Body)
+		assert.NoError(t, err)
+
+		favoriteLists := models.FavoriteList{}
+		err = json.Unmarshal(jsonDataFromHttp, &favoriteLists)
+		assert.NoError(t, err)
+
+		assert.Empty(t, favoriteLists)
 
 	})
 }
