@@ -4,7 +4,7 @@ import (
 	"user-favorites-service/internals/models"
 )
 
-type favoriteListsRepoFavoriteService interface {
+type favoriteListsRepo interface {
 	CheckFavoriteListExist(listId int, userId int) (bool, error)
 }
 
@@ -20,11 +20,11 @@ type favoritedUserClient interface {
 
 type FavoritesService struct {
 	favoritesRepository    favoritesRepository
-	favoriteListRepository favoriteListsRepoFavoriteService
+	favoriteListRepository favoriteListsRepo
 	userClient             favoritedUserClient
 }
 
-func NewFavoritesService(repository favoritesRepository, favoriteListRepo favoriteListsRepoFavoriteService, userClient favoritedUserClient) *FavoritesService {
+func NewFavoritesService(repository favoritesRepository, favoriteListRepo favoriteListsRepo, userClient favoritedUserClient) *FavoritesService {
 	return &FavoritesService{
 		favoritesRepository:    repository,
 		userClient:             userClient,

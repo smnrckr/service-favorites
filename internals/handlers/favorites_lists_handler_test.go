@@ -17,8 +17,9 @@ import (
 
 func TestFavoritesLists(t *testing.T) {
 	mockUserClient := new(handlers.MockUserClient)
-	favoriteListRespo := repositories.NewFavoritesListsRepository(testDb)
-	favoriteListService := services.NewFavoritesListsService(favoriteListRespo, mockUserClient)
+	favoritesRepo := repositories.NewFavoritesRepository(testDb)
+	favoriteListRepo := repositories.NewFavoritesListsRepository(testDb)
+	favoriteListService := services.NewFavoritesListsService(favoriteListRepo, favoritesRepo, mockUserClient)
 	handler := handlers.NewFavoritesListsHandler(favoriteListService)
 
 	app := fiber.New()
@@ -169,6 +170,7 @@ func TestFavoritesLists(t *testing.T) {
 	})
 
 	t.Run("Delete Favorite Lists", func(t *testing.T) {
+
 		req := httptest.NewRequest("DELETE", "/favorite-lists/1?userId=1", nil)
 		req.Header.Set("Content-Type", "application/json")
 

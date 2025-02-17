@@ -10,25 +10,17 @@ import (
 
 func TestFavoritesRepository(t *testing.T) {
 	favoritesRepo := repositories.NewFavoritesRepository(testDb)
-	favoritesListRepo := repositories.NewFavoritesListsRepository(testDb)
-	t.Run("AddProductToFavoriteList", func(t *testing.T) {
 
-		favoriteList := models.FavoriteList{
-			Name:   "oyunlar",
-			UserID: 2,
-		}
-		err := favoritesListRepo.CreateFavoriteList(&favoriteList)
-		assert.NoError(t, err)
-		assert.Equal(t, 1, favoriteList.Id)
+	t.Run("AddProductToFavoriteList", func(t *testing.T) {
 
 		favorites := models.Favorite{
 			UserID:    1,
-			ProductID: 1,
+			ProductID: 2,
 			ListID:    1,
 		}
-		err = favoritesRepo.AddProductToFavoriteList(&favorites)
+		err := favoritesRepo.AddProductToFavoriteList(&favorites)
 		assert.NoError(t, err)
-		assert.Equal(t, 1, favorites.Id)
+		assert.Equal(t, 2, favorites.Id)
 
 	})
 
@@ -36,21 +28,37 @@ func TestFavoritesRepository(t *testing.T) {
 		favorites, err := favoritesRepo.GetAllFavoritesFromList(1)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, favorites)
-		assert.Len(t, favorites, 1)
+		assert.Len(t, favorites, 2)
+
+	})
+
+	t.Run("DeletAllFavorites", func(t *testing.T) {
+
+		err := favoritesRepo.DeleteAllFavoritesByListId(1, 1)
+		assert.NoError(t, err)
+		favorites, err := favoritesRepo.GetAllFavoritesFromList(1)
+		assert.NoError(t, err)
+		assert.Empty(t, favorites)
 
 	})
 
 	t.Run("DeleteFavorites", func(t *testing.T) {
-
-		err := favoritesRepo.DeleteFavoriteById(1, 1, 1)
+		favorites := models.Favorite{
+			UserID:    1,
+			ProductID: 2,
+			ListID:    1,
+		}
+		err := favoritesRepo.AddProductToFavoriteList(&favorites)
 		assert.NoError(t, err)
-		favoriteLists, err := favoritesListRepo.GetFavoriteListsByUserId(1)
+		err = favoritesRepo.DeleteFavoriteById(1, 1, 2)
 		assert.NoError(t, err)
-		assert.Empty(t, favoriteLists)
+		favoritesFromList, err := favoritesRepo.GetAllFavoritesFromList(1)
+		assert.NoError(t, err)
+		assert.Len(t, favoritesFromList, 0)
 
 	})
-	t.Run("DeleteFavoritesInvalidId", func(t *testing.T) {
 
+	t.Run("DeleteFavoritesInvalidId", func(t *testing.T) {
 		err := favoritesRepo.DeleteFavoriteById(999, 999, 999)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, models.ErrorNoRowsAffected)

@@ -30,7 +30,7 @@ func TestFavorites(t *testing.T) {
 	t.Run("Add Product To Favorite List", func(t *testing.T) {
 		request := models.FavoriteCreateRequest{
 			UserID:    1,
-			ProductID: 1,
+			ProductID: 2,
 			ListID:    1,
 		}
 		requestJSON, err := json.Marshal(request)
@@ -51,7 +51,7 @@ func TestFavorites(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, 200, resp.StatusCode)
-		assert.Equal(t, 1, favorite.Id)
+		assert.Equal(t, 2, favorite.Id)
 	})
 
 	t.Run("Add Product To Favorite List Empty Body", func(t *testing.T) {
