@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"user-favorites-service/internals/models"
 )
 
@@ -11,8 +10,8 @@ type UserClient struct {
 	URL string
 }
 
-func NewUserClient() *UserClient {
-	URL := os.Getenv("USER_SERVICE_HOST")
+func NewUserClient(host string) *UserClient {
+	URL := host
 	return &UserClient{URL: URL}
 }
 

@@ -13,7 +13,7 @@ import (
 type favoritesService interface {
 	AddProductToFavoriteList(favorite *models.Favorite) error
 	DeleteFavoritetById(userId int, listId int, favoriteProductId int) error
-	GetAllFavoritesFromList(listId int, userId int) ([]models.Favorite, error)
+	//GetAllFavoritesFromList(listId int, userId int) ([]models.ProductResponse, error)
 }
 
 type FavoritesHandler struct {
@@ -73,31 +73,10 @@ func (h *FavoritesHandler) handleDeleteFavoriteById(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(models.SuccessResponse{Message: "Product removed from list"})
 }
 
-func (h *FavoritesHandler) handleGetAllFavoritesFromList(c *fiber.Ctx) error {
-	userId := c.QueryInt("userId", -1)
-	if userId == -1 {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "userId required"})
-	}
-
-	listId := c.QueryInt("listId", -1)
-	if listId == -1 {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{Error: "listId required"})
-	}
-
-	favoriteLists, err := h.favoritesService.GetAllFavoritesFromList(listId, userId)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{Error: err.Error()})
-	}
-	favoriteResponse := models.FavoritesResponse{Favorite: favoriteLists}
-
-	return c.Status(fiber.StatusOK).JSON(favoriteResponse)
-}
-
 func (h *FavoritesHandler) FavoritesSetRoutes(app *fiber.App) {
 	favoriteGroup := app.Group("/favorites")
 
 	favoriteGroup.Delete("/", h.handleDeleteFavoriteById)
-	favoriteGroup.Get("/", h.handleGetAllFavoritesFromList)
 	favoriteGroup.Post("/", h.handleAddProductToFavoriteList)
 
 }

@@ -1,5 +1,18 @@
 package handlers
 
+import (
+	"user-favorites-service/internals/models"
+)
+
+type MockProductClient struct {
+}
+
+func (productClient *MockProductClient) GetProductById(productID int) (models.ProductResponse, error) {
+	productsData := models.ProductResponse{}
+
+	return productsData, nil
+}
+
 type MockUserClient struct {
 }
 

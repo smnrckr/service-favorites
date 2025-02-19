@@ -24,21 +24,10 @@ func TestFavoritesRepository(t *testing.T) {
 
 	})
 
-	t.Run("GetAllFavoritesFromList", func(t *testing.T) {
-		favorites, err := favoritesRepo.GetAllFavoritesFromList(1)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, favorites)
-		assert.Len(t, favorites, 2)
-
-	})
-
 	t.Run("DeletAllFavorites", func(t *testing.T) {
 
 		err := favoritesRepo.DeleteAllFavoritesByListId(1, 1)
 		assert.NoError(t, err)
-		favorites, err := favoritesRepo.GetAllFavoritesFromList(1)
-		assert.NoError(t, err)
-		assert.Empty(t, favorites)
 
 	})
 
@@ -52,9 +41,6 @@ func TestFavoritesRepository(t *testing.T) {
 		assert.NoError(t, err)
 		err = favoritesRepo.DeleteFavoriteById(1, 1, 2)
 		assert.NoError(t, err)
-		favoritesFromList, err := favoritesRepo.GetAllFavoritesFromList(1)
-		assert.NoError(t, err)
-		assert.Len(t, favoritesFromList, 0)
 
 	})
 

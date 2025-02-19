@@ -1,6 +1,8 @@
 package models
 
-import validation "github.com/go-ozzo/ozzo-validation"
+import (
+	validation "github.com/go-ozzo/ozzo-validation"
+)
 
 type Favorite struct {
 	Id        int `json:"id" gorm:"column:id"`
@@ -28,5 +30,5 @@ func (Favorite) TableName() string {
 }
 
 type FavoritesResponse struct {
-	Favorite []Favorite `json:"favorites"`
+	Product []ProductResponse `json:"products"`
 }

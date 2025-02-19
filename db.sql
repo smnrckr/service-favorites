@@ -19,3 +19,48 @@ VALUES (1, 'ayakkabılar');
 
 INSERT INTO favorite (user_id,list_id,product_id)
 VALUES (1,1,1)
+
+
+
+user_id 1
+{
+ayakkabı listesi {
+    user_id
+    product_id 1{
+         ürün kodu
+         ürün adı,
+         ürün kodu,
+         ürün fiyatı
+    },
+
+    product_id 2{
+         ürün kodu
+         ürün adı,
+         ürün kodu,
+         ürün fiyatı
+    }
+   
+}
+,
+çanta listesi {
+    user_id
+    produc_id 1{
+         ürün kodu
+         ürün adı,
+         ürün kodu,
+         ürün fiyatı
+    },
+    produc_id 2{
+         ürün kodu
+         ürün adı,
+         ürün kodu,
+         ürün fiyatı
+    },
+     produc_id 3{
+         ürün kodu
+         ürün adı,
+         ürün kodu,
+         ürün fiyatı
+    }
+}
+}

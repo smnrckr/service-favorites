@@ -17,10 +17,11 @@ import (
 
 func TestFavorites(t *testing.T) {
 	mockUserClient := new(handlers.MockUserClient)
+	mockProductClient := new(handlers.MockProductClient)
 
 	mockFavoriteListRepo := new(handlers.MockFavoriteListsRepo)
 	favoriteRespo := repositories.NewFavoritesRepository(testDb)
-	favoriteListService := services.NewFavoritesService(favoriteRespo, mockFavoriteListRepo, mockUserClient)
+	favoriteListService := services.NewFavoritesService(favoriteRespo, mockFavoriteListRepo, mockUserClient, mockProductClient)
 	handler := handlers.NewFavoritesHandler(favoriteListService)
 
 	app := fiber.New()

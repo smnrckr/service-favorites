@@ -27,13 +27,18 @@ func main() {
 	port := os.Getenv("PORT")
 
 	db := postgresql.NewDB(postgresql.DbConfig{Host: host, Dbuser: dbuser, Dbname: dbname, Dbpassword: dbpassword, Port: port})
-	userClient := client.NewUserClient()
+
+	userClientHost := os.Getenv("USER_SERVICE_HOST")
+	productClientHost := os.Getenv("PRODUCT_SERVICE_HOST")
+
+	userClient := client.NewUserClient(userClientHost)
+	productClient := client.NewProductClient(productClientHost)
 
 	favoritesListRepo := repositories.NewFavoritesListsRepository(db)
 	favoritesRepo := repositories.NewFavoritesRepository(db)
 
-	favoritesService := services.NewFavoritesService(favoritesRepo, favoritesListRepo, userClient)
-	favoritesListService := services.NewFavoritesListsService(favoritesListRepo, favoritesRepo, userClient)
+	favoritesService := services.NewFavoritesService(favoritesRepo, favoritesListRepo, userClient, productClient)
+	favoritesListService := services.NewFavoritesListsService(favoritesListRepo, favoritesRepo, userClient, productClient)
 
 	favoritesListHandler := handlers.NewFavoritesListsHandler(favoritesListService)
 	favoritesHandler := handlers.NewFavoritesHandler(favoritesService)

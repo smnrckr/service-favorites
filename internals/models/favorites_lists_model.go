@@ -35,6 +35,8 @@ func (FavoriteList) TableName() string {
 	return "favorite_list"
 }
 
-type FavoriteListResponse struct {
-	FavoriteList []FavoriteList `json:"favorite_list"`
+type UserFavoritesList struct {
+	ListID  int               `json:"id"`
+	Name    string            `json:"name"`
+	Product []ProductResponse `json:"products"`
 }

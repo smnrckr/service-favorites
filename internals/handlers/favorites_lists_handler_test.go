@@ -17,9 +17,10 @@ import (
 
 func TestFavoritesLists(t *testing.T) {
 	mockUserClient := new(handlers.MockUserClient)
+	mockProductClient := new(handlers.MockProductClient)
 	favoritesRepo := repositories.NewFavoritesRepository(testDb)
 	favoriteListRepo := repositories.NewFavoritesListsRepository(testDb)
-	favoriteListService := services.NewFavoritesListsService(favoriteListRepo, favoritesRepo, mockUserClient)
+	favoriteListService := services.NewFavoritesListsService(favoriteListRepo, favoritesRepo, mockUserClient, mockProductClient)
 	handler := handlers.NewFavoritesListsHandler(favoriteListService)
 
 	app := fiber.New()
@@ -118,7 +119,7 @@ func TestFavoritesLists(t *testing.T) {
 		jsonDataFromHttp, err := io.ReadAll(resp.Body)
 		assert.NoError(t, err)
 
-		favoriteLists := models.FavoriteListResponse{}
+		favoriteLists := models.UserFavoritesList{}
 		err = json.Unmarshal(jsonDataFromHttp, &favoriteLists)
 		assert.NoError(t, err)
 
