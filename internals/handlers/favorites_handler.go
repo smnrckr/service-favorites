@@ -13,7 +13,6 @@ import (
 type favoritesService interface {
 	AddProductToFavoriteList(favorite *models.Favorite) error
 	DeleteFavoritetById(userId int, listId int, favoriteProductId int) error
-	//GetAllFavoritesFromList(listId int, userId int) ([]models.ProductResponse, error)
 }
 
 type FavoritesHandler struct {
@@ -82,16 +81,6 @@ func (h *FavoritesHandler) FavoritesSetRoutes(app *fiber.App) {
 }
 
 var FavoritesEndpoints = []*endpoint.EndPoint{
-	endpoint.New(
-		endpoint.GET,
-		"/favorites",
-		endpoint.WithTags("favorites"),
-		endpoint.WithParams(parameter.IntParam("userId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Kullanıcı id")), parameter.IntParam("listId", parameter.Query, parameter.WithRequired(), parameter.WithDescription("Liste id"))),
-		endpoint.WithSuccessfulReturns([]response.Response{response.New(
-			models.FavoritesResponse{}, "OK", "200")}),
-		endpoint.WithErrors([]response.Response{response.New(models.ErrorResponse{}, "Bad Request", "500")}),
-		endpoint.WithDescription("kullanıcının listesindeki favorileri döner"),
-	),
 	endpoint.New(
 		endpoint.POST,
 		"/favorites",
