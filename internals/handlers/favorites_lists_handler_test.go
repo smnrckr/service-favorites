@@ -143,6 +143,23 @@ func TestFavoritesLists(t *testing.T) {
 		assert.NotEmpty(t, errorResponse)
 
 	})
+	t.Run("Get All Favorites From List", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/favorites?userId=1&listId=1", nil)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+
+		jsonDataFromHttp, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		favorites := models.FavoritesResponse{}
+		err = json.Unmarshal(jsonDataFromHttp, &favorites)
+		assert.NoError(t, err)
+
+		assert.NotEmpty(t, favorites)
+
+	})
 
 	t.Run("Update Favorite Lists", func(t *testing.T) {
 		newData := models.FavoriteListUpdateRequest{

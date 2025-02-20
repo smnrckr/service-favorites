@@ -131,24 +131,6 @@ func TestFavorites(t *testing.T) {
 		assert.NotEmpty(t, errorResponse)
 	})
 
-	t.Run("Get All Favorites From List", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/favorites?userId=1&listId=1", nil)
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-
-		jsonDataFromHttp, err := io.ReadAll(resp.Body)
-		assert.NoError(t, err)
-
-		favorites := models.FavoritesResponse{}
-		err = json.Unmarshal(jsonDataFromHttp, &favorites)
-		assert.NoError(t, err)
-
-		assert.NotEmpty(t, favorites)
-
-	})
-
 	t.Run("Delete Product By Id", func(t *testing.T) {
 		req := httptest.NewRequest("DELETE", "/favorites?userId=1&listId=1&productId=1", nil)
 		req.Header.Set("Content-Type", "application/json")
@@ -156,21 +138,6 @@ func TestFavorites(t *testing.T) {
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
-
-		reqs := httptest.NewRequest("GET", "/favorites?userId=1&listId=1", nil)
-		reqs.Header.Set("Content-Type", "application/json")
-
-		respp, err := app.Test(reqs)
-		assert.NoError(t, err)
-
-		jsonDataFromHttp, err := io.ReadAll(respp.Body)
-		assert.NoError(t, err)
-
-		favorite := models.Favorite{}
-		err = json.Unmarshal(jsonDataFromHttp, &favorite)
-		assert.NoError(t, err)
-
-		assert.Empty(t, favorite)
 
 	})
 

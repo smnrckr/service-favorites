@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 	"user-favorites-service/internals/models"
 )
 
@@ -79,7 +80,13 @@ func (s *FavoritesListsService) GetFavoriteListsByUserId(userId int) ([]models.U
 	var response []models.UserFavoritesList
 
 	for _, list := range favoriteLists {
-		products, err := s.GetAllFavoritesFromList(list.Id, userId)
+
+		favorites, err := s.favoritesRepository.GetAllFavoritesFromList(list.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		products, err := s.fetchUserProductList(userId, favorites)
 		if err != nil {
 			return nil, err
 		}
@@ -104,73 +111,23 @@ func (s *FavoritesListsService) UpdateFavoriteList(listId int, updatedData model
 }
 
 func (s *FavoritesListsService) GetAllFavoritesFromList(listId int, userId int) ([]models.ProductResponse, error) {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	maxGoroutines := 5
-	productInfo := []models.ProductResponse{}
-
-	isUserExist, err := s.userClient.CheckUserExist(userId)
-	if err != nil || !isUserExist {
+	err := s.checkUserExist(userId)
+	if err != nil {
 		return nil, err
 	}
 
 	favoritesFromList, err := s.favoritesRepository.GetAllFavoritesFromList(listId)
-	if err != nil || !isUserExist {
+	if err != nil {
 		return nil, err
 	}
 
-	ch := make(chan models.ProductResponse, len(favoritesFromList))
-	sem := make(chan struct{}, maxGoroutines)
-	errs := make(chan error, 1)
-
-	for i := 0; i < len(favoritesFromList); i++ {
-		wg.Add(1)
-		sem <- struct{}{}
-
-		go func(productId int) {
-			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
-			products, err := s.GetProductInfo(productId)
-			defer func() { <-sem }()
-			if err != nil {
-				fmt.Printf("bu ürün fetch edilemedi %d: %v\n", productId, err)
-				cancel()
-				errs <- err
-				return
-			}
-
-			ch <- products
-		}(favoritesFromList[i].ProductID)
-	}
-	go func() {
-		wg.Wait()
-		close(ch)
-		close(errs)
-	}()
-
-	for product := range ch {
-		mu.Lock()
-		productInfo = append(productInfo, product)
-		mu.Unlock()
-
+	productResponse, err := s.fetchUserProductList(userId, favoritesFromList)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(productInfo) != len(favoritesFromList) {
-		err := fmt.Sprintf("expected %d but have %d", len(favoritesFromList), len(productInfo))
-
-		return nil, errors.New(err)
-	}
-
-	return productInfo, err
+	return productResponse, err
 }
 
 func (s *FavoritesListsService) GetProductInfo(productId int) (models.ProductResponse, error) {
@@ -192,4 +149,69 @@ func (s *FavoritesListsService) checkUserExist(userId int) error {
 		return models.ErrorUserNotFound
 	}
 	return nil
+}
+
+func (s *FavoritesListsService) fetchUserProductList(userId int, productList []models.Favorite) ([]models.ProductResponse, error) {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	maxGoroutines := 5
+	productInfo := []models.ProductResponse{}
+
+	isUserExist, err := s.userClient.CheckUserExist(userId)
+	if err != nil || !isUserExist {
+		return nil, err
+	}
+
+	ch := make(chan models.ProductResponse, len(productList))
+	sem := make(chan struct{}, maxGoroutines)
+	errs := make(chan error, 1)
+	for i := 0; i < len(productList); i++ {
+
+		select {
+		case <-ctx.Done():
+			return nil, <-errs
+		default:
+		}
+
+		wg.Add(1)
+		sem <- struct{}{}
+
+		go func(productId int, i int) {
+			defer wg.Done()
+			products, err := s.GetProductInfo(productId)
+			defer func() { <-sem }()
+			if err != nil {
+				cancel()
+				errs <- err
+				return
+			}
+
+			ch <- products
+		}(productList[i].ProductID, i)
+		time.Sleep(2 * time.Second)
+	}
+	go func() {
+		wg.Wait()
+		close(ch)
+		close(errs)
+	}()
+
+	for product := range ch {
+		mu.Lock()
+		productInfo = append(productInfo, product)
+		mu.Unlock()
+
+	}
+
+	if len(productInfo) != len(productList) {
+		err := fmt.Sprintf("expected %d but have %d", len(productList), len(productInfo))
+
+		return nil, errors.New(err)
+	}
+
+	return productInfo, err
 }

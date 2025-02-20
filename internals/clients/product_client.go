@@ -35,7 +35,6 @@ func (productClient *ProductClient) GetProductById(productID int) (models.Produc
 			resp = response
 			break
 		}
-
 		time.Sleep(2000)
 
 	}
