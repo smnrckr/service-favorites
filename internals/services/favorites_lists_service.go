@@ -1,6 +1,9 @@
 package services
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"user-favorites-service/internals/models"
 )
@@ -104,7 +107,12 @@ func (s *FavoritesListsService) GetAllFavoritesFromList(listId int, userId int) 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	maxGoroutines := 5
 	productInfo := []models.ProductResponse{}
+
 	isUserExist, err := s.userClient.CheckUserExist(userId)
 	if err != nil || !isUserExist {
 		return nil, err
@@ -116,22 +124,37 @@ func (s *FavoritesListsService) GetAllFavoritesFromList(listId int, userId int) 
 	}
 
 	ch := make(chan models.ProductResponse, len(favoritesFromList))
+	sem := make(chan struct{}, maxGoroutines)
+	errs := make(chan error, 1)
 
 	for i := 0; i < len(favoritesFromList); i++ {
 		wg.Add(1)
+		sem <- struct{}{}
 
 		go func(productId int) {
 			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
 			products, err := s.GetProductInfo(productId)
+			defer func() { <-sem }()
 			if err != nil {
+				fmt.Printf("bu ürün fetch edilemedi %d: %v\n", productId, err)
+				cancel()
+				errs <- err
 				return
 			}
+
 			ch <- products
 		}(favoritesFromList[i].ProductID)
 	}
 	go func() {
 		wg.Wait()
 		close(ch)
+		close(errs)
 	}()
 
 	for product := range ch {
@@ -139,6 +162,12 @@ func (s *FavoritesListsService) GetAllFavoritesFromList(listId int, userId int) 
 		productInfo = append(productInfo, product)
 		mu.Unlock()
 
+	}
+
+	if len(productInfo) != len(favoritesFromList) {
+		err := fmt.Sprintf("expected %d but have %d", len(favoritesFromList), len(productInfo))
+
+		return nil, errors.New(err)
 	}
 
 	return productInfo, err
